@@ -69,7 +69,7 @@ def analyze_image(image_path: str, prompt: str = None) -> str:
     
     # Same endpoint as text-only chatbot - REST uniform interface principle
     # The API determines behavior based on content, not different URLs
-    api_url = "https://api.openai-proxy.org/v1/chat/completions"
+    api_url = "https://api.openai.com/v1/chat/completions"
     
     try:
         base64_image, media_type = encode_image(image_path)
