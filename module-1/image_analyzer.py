@@ -53,23 +53,23 @@ def encode_image(image_path: str) -> tuple[str, str]:
 
 
 def analyze_image(image_path: str, prompt: str = None) -> str:
-    """Analyze image using Claude API.
+    """Analyze image using OpenAI API.
     
     Demonstrates sending multi-modal content (text + image)
     through a single API endpoint.
     """
     # Security best practice: API key from environment, never hardcoded
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
-        print("Error: ANTHROPIC_API_KEY not found in environment variables.", file=sys.stderr)
+        print("Error: OPENAI_API_KEY not found in environment variables.", file=sys.stderr)
         print("Please create a .env file with your API key:")
-        print("ANTHROPIC_API_KEY=your-api-key-here")
+        print("OPENAI_API_KEY=your-api-key-here")
         sys.exit(1)
     
     # Same endpoint as text-only chatbot - REST uniform interface principle
     # The API determines behavior based on content, not different URLs
-    api_url = "https://api.anthropic.com/v1/messages"
+    api_url = "https://api.openai-proxy.org/v1/chat/completions"
     
     try:
         base64_image, media_type = encode_image(image_path)
@@ -78,14 +78,13 @@ def analyze_image(image_path: str, prompt: str = None) -> str:
         
         # HTTP Headers - same structure as text-only requests
         headers = {
-            "x-api-key": api_key,               # Authentication
-            "anthropic-version": "2023-06-01",  # API versioning
-            "content-type": "application/json"  # We're sending JSON (with embedded base64)
+            "Authorization": f"Bearer {api_key}",  # Bearer token authentication (OpenAI format)
+            "Content-Type": "application/json"     # We're sending JSON (with embedded base64)
         }
         
-        # Multi-modal content in request body
+        # Multi-modal content in request body (OpenAI format)
         payload = {
-            "model": "claude-sonnet-4-20250514",
+            "model": "gpt-4o-mini",  # OpenAI's vision-capable model
             "max_tokens": 4096,
             "messages": [{
                 "role": "user",
@@ -96,11 +95,9 @@ def analyze_image(image_path: str, prompt: str = None) -> str:
                         "text": user_prompt
                     },
                     {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",        # Image encoding method
-                            "media_type": media_type,  # MIME type for proper interpretation
-                            "data": base64_image       # Actual image data as text
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{media_type};base64,{base64_image}"  # Data URL format
                         }
                     }
                 ]
@@ -122,9 +119,9 @@ def analyze_image(image_path: str, prompt: str = None) -> str:
             error_msg = error_data.get('error', {}).get('message', f'API Error: {response.status_code}')
             raise Exception(error_msg)
         
-        # Extract text response from the same structure as text-only requests
+        # Extract text response from OpenAI's response structure
         response_data = response.json()
-        return response_data['content'][0]['text']
+        return response_data['choices'][0]['message']['content']
         
     # Comprehensive error handling for different failure modes
     except requests.exceptions.Timeout:
@@ -139,7 +136,7 @@ def analyze_image(image_path: str, prompt: str = None) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analyze images using Claude AI",
+        description="Analyze images using OpenAI GPT-4o-mini",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Example:\n  python image_analyzer.py photo.jpg\n  python image_analyzer.py photo.png --prompt 'What objects are in this image?'"
     )

@@ -15,12 +15,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class ClaudeChatbot:
-    def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514"):
+class OpenAIChatbot:
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
         self.api_key = api_key
-        # API URL structure: protocol (https) + domain (api.anthropic.com) + path (/v1/messages)
+        # API URL structure: protocol (https) + domain (api.openai.com) + path (/v1/chat/completions)
         # The 'v1' indicates API version - following REST uniform interface principle
-        self.api_url = "https://api.anthropic.com/v1/messages"
+        self.api_url = "https://api.openai.com/v1/chat/completions"
         self.model = model
         # Store conversation history to demonstrate REST statelessness principle
         # Each request must contain complete context
@@ -41,18 +41,19 @@ class ClaudeChatbot:
         try:
             # HTTP Request Headers - metadata about the request
             headers = {
-                "x-api-key": self.api_key,          # Authorization header for API authentication
-                "anthropic-version": "2023-06-01",  # API version specification
-                "content-type": "application/json"  # Tells server we're sending JSON data
+                "Authorization": f"Bearer {self.api_key}",  # Bearer token authentication (OpenAI format)
+                "Content-Type": "application/json"          # Tells server we're sending JSON data
             }
             
             # HTTP Request Body - the actual data we're sending
             # JSON format as specified by Content-Type header
+            # OpenAI format: system message is part of the messages array
+            full_messages = [{"role": "system", "content": self.system_message}] + self.messages
+            
             payload = {
                 "model": self.model,
                 "max_tokens": 4096,
-                "system": self.system_message,
-                "messages": self.messages  # Full history = REST statelessness
+                "messages": full_messages  # Full history including system message = REST statelessness
             }
             
             # HTTP POST method - used for sending data and expecting a response
@@ -73,8 +74,8 @@ class ClaudeChatbot:
             
             # Parse HTTP Response Body - contains the actual AI response
             response_data = response.json()
-            # Extract text from Claude's response structure
-            assistant_message = response_data['content'][0]['text']
+            # Extract text from OpenAI's response structure
+            assistant_message = response_data['choices'][0]['message']['content']
             # Store response for conversation continuity
             self.messages.append({"role": "assistant", "content": assistant_message})
             
@@ -100,18 +101,18 @@ class ClaudeChatbot:
 def main():
     # Security: Load API key from environment variable, not hardcoded!
     # This follows the Authorization best practices from the course
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
-        print("Error: ANTHROPIC_API_KEY not found in environment variables.")
+        print("Error: OPENAI_API_KEY not found in environment variables.")
         print("Please create a .env file with your API key:")
-        print("ANTHROPIC_API_KEY=your-api-key-here")
+        print("OPENAI_API_KEY=your-api-key-here")
         sys.exit(1)
     
-    chatbot = ClaudeChatbot(api_key)
+    chatbot = OpenAIChatbot(api_key)
     
     print("="*50)
-    print("Claude Command Line Chatbot")
+    print("OpenAI Command Line Chatbot")
     print("="*50)
     print("Commands:")
     print("  • Type 'quit' or 'exit' to end")
@@ -137,7 +138,7 @@ def main():
                 print("System message updated.")
                 continue
                 
-            print("\nClaude:")
+            print("\nGPT:")
             response = chatbot.chat(user_input)
             print(response)
             

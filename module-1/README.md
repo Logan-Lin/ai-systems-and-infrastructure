@@ -1,4 +1,4 @@
-Here are two reference programs for the post-lecture exercise, demonstrating the core concepts from the API Fundamentals course. Both programs use the `requests` library to interact directly with Claude's API, providing transparency into HTTP mechanics. They also use the `dotenv` library to load environment variables from the `.env` file, which in this case is used for storing our API keys.
+Here are two reference programs for the post-lecture exercise, demonstrating the core concepts from the API Fundamentals course. Both programs use the `requests` library to interact directly with OpenAI's API, providing transparency into HTTP mechanics. They also use the `dotenv` library to load environment variables from the `.env` file, which in this case is used for storing our API keys.
 
 ## API Key Setup
 
@@ -12,8 +12,8 @@ Storing API keys in `.env` files is a security best practice that prevents accid
    cp .env.example .env
    ```
 
-2. **Get your Anthropic API key:**
-   - Go to https://console.anthropic.com/
+2. **Get your OpenAI API key:**
+   - Go to https://platform.openai.com/
    - Sign in or create an account
    - Navigate to "API Keys" section
    - Create a new API key
@@ -21,23 +21,23 @@ Storing API keys in `.env` files is a security best practice that prevents accid
 3. **Edit the .env file:**
    Open `.env` in a text editor and replace `your-api-key-here` with your actual API key:
    ```
-   ANTHROPIC_API_KEY=sk-ant-api03-xxxxxxxxxxxxx
+   OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
    ```
 
    The API key format:
-   - Starts with `sk-ant-`
+   - Starts with `sk-proj-` (for project keys) or `sk-` (for older format)
    - Followed by additional characters
    - Keep it secret and never commit it to version control
 
-This process works a bit differently for other providers (like OpenAI), but the idea is similar.
+This process works similarly for other providers (like Anthropic), but the idea is the same.
 
 ## Code Walkthrough
 
-### claude_chatbot.py
+### openai_chatbot.py
 
 An interactive command-line chatbot that demonstrates core API concepts:
 
-- **HTTP Headers:** Sets up authorization (`x-api-key`), content type, and API version
+- **HTTP Headers:** Sets up authorization (`Authorization: Bearer`), content type
 - **Request Body:** Sends JSON payload with model selection and conversation messages
 - **Statelessness:** Includes full conversation history in each request (REST principle)
 - **Response Parsing:** Extracts assistant's message from JSON response
@@ -49,12 +49,12 @@ An interactive command-line chatbot that demonstrates core API concepts:
 
 ### image_analyzer.py
 
-A command-line tool for analyzing images using Claude's vision capabilities:
+A command-line tool for analyzing images using OpenAI's GPT-4o-mini vision capabilities:
 
 - **Multi-modal Content:** Sends both text and image in a single API request
 - **Base64 Encoding:** Converts binary image data to text format for JSON transport
 - **Content-Type Handling:** Maps image formats to appropriate MIME types
-- **Same API Endpoint:** Uses the same `/v1/messages` endpoint as text-only requests
+- **Same API Endpoint:** Uses the same `/v1/chat/completions` endpoint as text-only requests
 
 **Key Features:**
 - Supports jpg, png, gif, webp formats
@@ -67,13 +67,13 @@ A command-line tool for analyzing images using Claude's vision capabilities:
 ### Running the Chatbot
 
 ```bash
-python claude_chatbot.py
+python openai_chatbot.py
 ```
 
 **Sample interaction:**
 ```
 ==================================================
-Claude Command Line Chatbot
+OpenAI Command Line Chatbot
 ==================================================
 Commands:
   • Type 'quit' or 'exit' to end
@@ -83,12 +83,12 @@ Commands:
 
 You: What are APIs?
 
-Claude:
+GPT:
 APIs (Application Programming Interfaces) are standardized ways for different software applications to communicate and share data with each other, acting like a contract that defines how programs can request services and exchange information.
 
 You: Can you give me an example?
 
-Claude:
+GPT:
 Sure! A common example is a weather app on your phone. When you open it, the app uses a weather service's API to request current conditions for your location. The API processes this request and sends back data like temperature, humidity, and forecast, which your app then displays in a user-friendly format. The app doesn't need to collect weather data itself—it just asks the weather service's API for the information it needs.
 
 You: clear
@@ -129,9 +129,8 @@ This image shows the famous Shibuya Crossing in Tokyo, Japan, captured during wh
 Both programs demonstrate the three key parts of HTTP requests:
 
 1. **Headers** - Metadata about the request:
-   - `x-api-key`: Authentication credential
-   - `anthropic-version`: API version specification
-   - `content-type`: Indicates JSON payload
+   - `Authorization`: Bearer token authentication credential
+   - `Content-Type`: Indicates JSON payload
 
 2. **Body** - The actual data being sent:
    - JSON format with model, messages, and parameters
@@ -150,7 +149,7 @@ The programs parse responses following standard patterns:
 ### REST Principles in Practice
 
 1. **Statelessness**: Each request contains complete context (full conversation history)
-2. **Uniform Interface**: Same endpoint (`/v1/messages`) for different content types
+2. **Uniform Interface**: Same endpoint (`/v1/chat/completions`) for different content types
 3. **Standard Methods**: POST for data submission, consistent URL structure
 
 ### Security Best Practices
@@ -161,7 +160,7 @@ The programs parse responses following standard patterns:
 
 ## Common Issues & Troubleshooting
 
-### "ANTHROPIC_API_KEY not found"
+### "OPENAI_API_KEY not found"
 - **Cause**: Missing or incorrectly named `.env` file
 - **Solution**: Ensure `.env` exists in the same directory and contains your API key
 
@@ -172,7 +171,7 @@ The programs parse responses following standard patterns:
 ### "402 Payment Required" or "Insufficient credits"
 - **Cause**: Your API key has no remaining credits or usage quota
 - **Solution**: 
-  - Check your usage and billing at https://console.anthropic.com/settings/billing
+  - Check your usage and billing at https://platform.openai.com/usage
   - Add credits to your account or upgrade your plan
   - For new accounts, ensure you've added a payment method and purchased credits
 
